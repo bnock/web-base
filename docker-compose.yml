@@ -1,0 +1,48 @@
+version: '3.7'
+services:
+    db:
+        image: mysql:5.7
+        environment:
+            - MYSQL_ROOT_PASSWORD=Ch@ngeTh1s
+            - MYSQL_DATABASE=web-base
+            - MYSQL_USER=web-base
+            - MYSQL_PASSWORD=secret
+        ports:
+            - "3306:3306"
+        volumes:
+            - db-data:/var/lib/mysql
+        networks:
+            - backend
+    php:
+        image: php:7.3-fpm-alpine
+        depends_on:
+            - db
+            - redis
+        ports:
+            - "9000:9000"
+        volumes:
+            - ./api:/app
+        networks:
+            - backend
+    nginx:
+        image: nginx:stable-alpine
+        depends_on:
+            - php
+        ports:
+            - "80:80"
+        volumes:
+            - ./nginx:/etc/nginx/conf.d
+        networks:
+            - backend
+            - frontend
+    redis:
+        image: redis:5-alpine
+        ports:
+            - "6379:6379"
+        networks:
+            - backend
+volumes:
+    db-data:
+networks:
+    backend:
+    frontend:
