@@ -1,21 +1,37 @@
 <?php
 namespace App\Http\Controllers;
 
-use http\Exception\BadUrlException;
-use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Eloquent\ModelNotFoundException;
-use Illuminate\Http\JsonResponse;
+use App\Contracts\ApiResource;
 use Illuminate\Http\Request;
-use Illuminate\Http\Response;
+use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
+use Illuminate\Http\Resources\Json\Resource;
 use Illuminate\Support\Str;
-use ReflectionClass;
-use ReflectionException;
 
 class ApiController extends Controller
 {
-    protected const ENTITY_NAMESPACE = 'App';
+    public function all(Request $request): AnonymousResourceCollection
+    {
+        $model = resolve(Str::replaceFirst('api/', '', $request->route()->uri()));
 
-    public function all(Request $request): JsonResponse
+        return $model->getResourceClass()::collection($model::all());
+    }
+
+    public function one(ApiResource $resource): Resource
+    {
+
+    }
+
+    public function create(Request $request): Resource
+    {
+
+    }
+
+    public function update(Request $request, ApiResource $resource): Resource
+    {
+
+    }
+
+    public function delete(Request $request, ApiResource $resource): Resource
     {
 
     }
