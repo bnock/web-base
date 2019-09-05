@@ -1,14 +1,7 @@
 <?php
 namespace App\Contracts;
 
-use ArrayAccess;
-use Illuminate\Contracts\Queue\QueueableEntity;
-use Illuminate\Contracts\Routing\UrlRoutable;
-use Illuminate\Contracts\Support\Arrayable;
-use Illuminate\Contracts\Support\Jsonable;
-use JsonSerializable;
-
-interface ApiResource extends ArrayAccess, Arrayable, Jsonable, JsonSerializable, QueueableEntity, UrlRoutable
+interface ApiResource extends Model
 {
     /**
      * Get the Resource class for building responses.
@@ -58,4 +51,11 @@ interface ApiResource extends ArrayAccess, Arrayable, Jsonable, JsonSerializable
      * @return string|callable
      */
     public static function getDeleteRoleOrGate();
+
+    /**
+     * Get the validation rules for this resource.
+     *
+     * @return array
+     */
+    public static function getValidationRules(): array;
 }

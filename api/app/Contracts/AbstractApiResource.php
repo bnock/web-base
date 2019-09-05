@@ -42,4 +42,9 @@ abstract class AbstractApiResource extends Model implements ApiResource
     {
         return Role::ADMIN()->getValue();
     }
+
+    public static function getValidationRules(): array
+    {
+        return [];
+    }
 }

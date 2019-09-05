@@ -3,12 +3,16 @@ namespace App\Http\Controllers;
 
 use App\Contracts\ApiResource;
 use App\Enumerations\ApiOperation;
+use Exception;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
 use Illuminate\Http\Resources\Json\JsonResource;
 use Illuminate\Http\Resources\Json\Resource;
+use Illuminate\Http\Response;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Str;
+use Illuminate\Validation\ValidationException;
 
 class ApiController extends Controller
 {
@@ -32,41 +36,103 @@ class ApiController extends Controller
 
         Gate::authorize(ApiOperation::ALL()->getValue() . '-' . $resourceKey);
 
-        $resource = resolve($resourceKey);
+        /** @var ApiResource $apiResource */
+        $apiResource = resolve($resourceKey);
 
-        return $resource->getResourceClass()::collection($resource::all());
+        /** @var JsonResource $resourceClass */
+        $resourceClass = $apiResource::getResourceClass();
+
+        return $resourceClass::collection($apiResource::all());
     }
 
     /**
      * Get one of a resource.
      *
      * @param Request $request
-     * @param ApiResource $resource
+     * @param ApiResource $apiResource
      * @return Resource
      */
-    public function one(Request $request, ApiResource $resource): Resource
+    public function one(Request $request, ApiResource $apiResource): JsonResource
+    {
+        $resourceKey = Str::replaceFirst('api/', '', $request->path());
+
+        Gate::authorize(ApiOperation::ONE()->getValue() . '-' . $resourceKey);
+
+        /** @var JsonResource $resourceClass */
+        $resourceClass = $apiResource::getResourceClass();
+
+        return $resourceClass::make($apiResource);
+    }
+
+    /**
+     * Create a resource.
+     *
+     * @param Request $request
+     * @return JsonResponse
+     * @throws ValidationException
+     */
+    public function create(Request $request): JsonResponse
     {
         $modelKey = Str::replaceFirst('api/', '', $request->path());
 
-        Gate::authorize('one-' . $modelKey);
+        Gate::authorize(ApiOperation::CREATE()->getValue() . '-' . $modelKey);
 
-        $resourceClass = $resource::getResourceClass();
+        /** @var ApiResource $apiResource */
+        $apiResource = resolve($modelKey);
 
-        return $resourceClass::make($resource);
+        $validated = $this->validate($request, $apiResource::getValidationRules());
+
+        $resource = $apiResource::query()->create($validated);
+
+        /** @var JsonResource $resourceClass */
+        $resourceClass = $apiResource::getResourceClass();
+
+        return $resourceClass::make($resource)->response()->setStatusCode(Response::HTTP_CREATED);
     }
 
-    public function create(Request $request): Resource
+    /**
+     * Update a resource.
+     *
+     * @param Request $request
+     * @param ApiResource $apiResource
+     * @return JsonResource
+     * @throws ValidationException
+     */
+    public function update(Request $request, ApiResource $apiResource): JsonResource
     {
+        $modelKey = Str::replaceFirst('api/', '', $request->path());
 
+        Gate::authorize(ApiOperation::UPDATE()->getValue() . '-' . $modelKey);
+
+        $validated = $this->validate($request, $apiResource::getValidationRules());
+
+        $apiResource->update($validated);
+
+        /** @var JsonResource $resourceClass */
+        $resourceClass = $apiResource::getResourceClass();
+
+        return $resourceClass::make($apiResource);
     }
 
-    public function update(Request $request, ApiResource $resource): Resource
+    /**
+     * Delete a resource.
+     *
+     * @param Request $request
+     * @param ApiResource $apiResource
+     * @return JsonResource
+     * @throws Exception
+     */
+    public function delete(Request $request, ApiResource $apiResource): JsonResource
     {
+        $modelKey = Str::replaceFirst('api/', '', $request->path());
 
-    }
+        Gate::authorize(ApiOperation::DELETE()->getValue() . '-' . $modelKey);
 
-    public function delete(Request $request, ApiResource $resource): Resource
-    {
+        $apiResource->delete();
 
+        /** @var JsonResource $resourceClass */
+        $resourceClass = $apiResource::getResourceClass();
+
+        return $resourceClass::make($apiResource);
     }
 }
